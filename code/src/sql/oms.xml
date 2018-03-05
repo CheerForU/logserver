@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap
+PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN"
+"http://www.ibatis.com/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="oms">
+
+    <statement id="query" parameterClass="java.util.List" resultClass="cn.com.xxx.logserver.filter.oms.model.SysConfig">
+        SELECT s_key,s_value FROM tbl_sysconfig where s_key in
+        <iterate  conjunction="," open="(" close=")">
+            #list[]#
+        </iterate>
+    </statement>
+
+    <statement id="update" parameterClass="cn.com.xxx.logserver.filter.oms.model.SysConfig">
+        UPDATE tbl_sysconfig SET s_value = #s_value# where s_key=#s_key#;
+    </statement>
+    
+</sqlMap>

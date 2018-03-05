@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+           http://www.springframework.org/schema/beans/spring-beans-4.2.xsd
+           http://www.springframework.org/schema/context
+           http://www.springframework.org/schema/context/spring-context-4.2.xsd
+           http://www.springframework.org/schema/aop
+           http://www.springframework.org/schema/aop/spring-aop-4.2.xsd
+           http://www.springframework.org/schema/tx
+           http://www.springframework.org/schema/tx/spring-tx-4.2.xsd">
+
+	<bean class="cn.com.xxx.logserver.common.PropertyPlaceholder"
+		factory-method="getInstance">
+		<property name="locations">
+			<list>
+				<value>file:../conf/jdbc.properties</value>
+				<value>file:../conf/node.properties</value>
+			</list>
+		</property>
+		<property name="systemPropertiesMode" value="0" />
+		<property name="ignoreUnresolvablePlaceholders" value="true" />
+	</bean>
+
+	<bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource"
+        destroy-method="close">
+        <property name="driverClassName" value="${jdbc.driver}" />
+        <property name="url" value="${jdbc.url}" />
+        <property name="username" value="${jdbc.username}" />
+        <property name="password" value="${jdbc.password}" />
+        <property name="initialSize" value="${jdbc.minconn}" />
+        <property name="minIdle" value="${jdbc.minconn}" />
+        <property name="maxIdle" value="${jdbc.maxconn}" />
+        <property name="maxActive" value="${jdbc.maxconn}" />
+        <property name="maxWait" value="20000" />
+        <property name="removeAbandoned" value="true" />
+        <property name="removeAbandonedTimeout" value="180" />
+        <property name="validationQuery" value="select 1" />
+        <property name="validationQueryTimeout" value="1" />
+        <property name="testOnBorrow" value="false" />
+        <property name="testOnReturn" value="false" />
+        <property name="testWhileIdle" value="true" />
+        <property name="timeBetweenEvictionRunsMillis" value="60000" />
+    </bean>
+
+	<bean id="sqlMapClient" class="org.springframework.orm.ibatis.SqlMapClientFactoryBean">
+		<property name="configLocation" value="sql/SqlMapConfig.xml" />
+	</bean>
+
+	<bean id="daoTemplate" class="org.springframework.orm.ibatis.SqlMapClientTemplate">
+		<property name="dataSource" ref="dataSource" />
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+
+	<bean id="transactionManager"
+		class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+
+	<bean id="auditLogDaoImpl" class="cn.com.xxx.logserver.filter.auditlog.AuditLogDaoImpl"
+		factory-method="getInstance">
+		<property name="daoTemplate" ref="daoTemplate" />
+		<property name="transactionManager" ref="transactionManager" />
+	</bean>
+
+	<bean id="CDPLogDaoImpl" class="cn.com.xxx.logserver.filter.cdplog.CDPLogDaoImpl"
+		factory-method="getInstance">
+		<property name="daoTemplate" ref="daoTemplate" />
+		<property name="transactionManager" ref="transactionManager" />
+	</bean>
+	
+	<bean id="rsyncLogDaoImpl" class="cn.com.xxx.logserver.filter.rsynclog.RsyncLogDaoImpl"
+        factory-method="getInstance">
+        <property name="daoTemplate" ref="daoTemplate" />
+        <property name="transactionManager" ref="transactionManager" />
+    </bean>
+
+	<bean id="jobHistoryDaoImpl"
+		class="cn.com.xxx.logserver.filter.jobhistory.JobHistoryDaoImpl"
+		factory-method="getInstance">
+		<property name="daoTemplate" ref="daoTemplate" />
+		<property name="transactionManager" ref="transactionManager" />
+	</bean>
+
+	<bean id="tableHandlerDaoImpl"
+		class="cn.com.xxx.logserver.tablemgr.TableHandlerDaoImpl"
+		factory-method="getInstance">
+		<property name="daoTemplate" ref="daoTemplate" />
+		<property name="transactionManager" ref="transactionManager" />
+	</bean>
+
+	<bean id="alarmDaoImpl"
+		class="cn.com.xxx.logserver.filter.alarm.AlarmDaoImpl"
+		factory-method="getInstance">
+		<property name="daoTemplate" ref="daoTemplate" />
+		<property name="transactionManager" ref="transactionManager" />
+	</bean>
+	
+	<bean id="reportDaoImpl"
+		class="cn.com.xxx.logserver.filter.report.ReportDaoImpl"
+		factory-method="getInstance">
+		<property name="daoTemplate" ref="daoTemplate" />
+		<property name="transactionManager" ref="transactionManager" />
+	</bean>
+	
+    <bean id="SNMPDaoImpl"
+        class="cn.com.xxx.logserver.filter.oms.snmp.SNMPDaoImpl"
+        factory-method="getInstance">
+        <property name="daoTemplate" ref="daoTemplate" />
+        <property name="transactionManager" ref="transactionManager" />
+    </bean>
+    
+    <bean id="SyslogDaoImpl"
+        class="cn.com.xxx.logserver.filter.oms.syslog.SyslogDaoImpl"
+        factory-method="getInstance">
+        <property name="daoTemplate" ref="daoTemplate" />
+        <property name="transactionManager" ref="transactionManager" />
+    </bean>
+
+	<bean id="filterManager" class="cn.com.xxx.logserver.filter.FilterManager"
+		factory-method="getInstance">
+		<property name="filters">
+			<list>
+				<bean class="cn.com.xxx.logserver.filter.auditlog.AuditlogFilter" />
+				<bean class="cn.com.xxx.logserver.filter.cdplog.CDPLogFilter" />
+				<bean class="cn.com.xxx.logserver.filter.jobhistory.JobLogFilter" />
+				<bean class="cn.com.xxx.logserver.filter.rsynclog.RsyncLogFilter" />
+				<bean class="cn.com.xxx.logserver.filter.report.AlarmReportFilter" />
+				<bean id="alarmFilter" class="cn.com.xxx.logserver.filter.alarm.AlarmFilter"
+					factory-method="getInstance" init-method="init"/>
+				<bean id="syslogFilter" class="cn.com.xxx.logserver.filter.oms.syslog.SyslogFilter"
+                    factory-method="getInstance" init-method="init" destroy-method="destroy"/>
+			</list>
+		</property>
+		<property name="transactionManager" ref="transactionManager" />
+	</bean>
+	
+</beans>
